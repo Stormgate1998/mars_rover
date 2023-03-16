@@ -24,7 +24,7 @@ public class CleanupGameService : BackgroundService
             var oldGames = multiGameHoster.Games.Where(g => g.Value.CreatedOn < DateTime.Now.AddMinutes(CleanupFrequencyMinutes * -1)).ToArray();
             foreach (var oldGame in oldGames)
             {
-                logger.LogInformation("Cleaning up game {gameId}", oldGame.Key);
+                logger.LogInformation("Cleaning up game {key}", oldGame.Key);
                 multiGameHoster.Games.Remove(oldGame.Key, out _);
                 logger.LogInformation("Cleaned up game {key}", oldGame.Key);
             }
