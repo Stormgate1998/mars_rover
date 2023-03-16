@@ -26,6 +26,7 @@ public class CleanupGameService : BackgroundService
             {
                 logger.LogInformation("Cleaning up game {gameId}", oldGame.Key);
                 multiGameHoster.Games.Remove(oldGame.Key, out _);
+                logger.LogInformation("Cleaned up game {key}", oldGame.Key);
             }
 
             if (oldGames.Any())

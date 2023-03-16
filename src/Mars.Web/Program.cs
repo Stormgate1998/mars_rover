@@ -5,6 +5,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Prometheus;
 using Serilog;
 using Serilog.Exceptions;
 using System.Diagnostics.Metrics;
@@ -49,7 +50,7 @@ builder.Services.AddOpenTelemetry()
     });
 
 var joinMeter = new Meter("Mars.Web.Meters");
-var counter = joinMeter.CreateCounter<long>("Game Joins");
+var counter = joinMeter.CreateCounter<long>("Game_joins_count");
 builder.Services.AddSingleton<MarsCounters>(new MarsCounters
 {
     GameJoins = counter,
@@ -65,6 +66,13 @@ builder.Services.AddOpenTelemetry()
         builder.AddRuntimeInstrumentation();
         builder.AddProcessInstrumentation();
         builder.AddOtlpExporter(o => o.Endpoint = new Uri("http://otel-collector:4317"));
+
+        //Added prometheus exporter
+        builder.AddPrometheusExporter(options =>
+        {
+            options.ScrapeEndpointPath = "/metrics";
+            options.ScrapeResponseCacheDurationMilliseconds = 0;
+        });
     });
 
 builder.Services.AddApplicationInsightsTelemetry();
@@ -118,6 +126,8 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
+
 if (!app.Environment.IsDevelopment())
 {
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
@@ -125,8 +135,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-
 app.UseRouting();
+app.UseHttpMetrics();
+
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>

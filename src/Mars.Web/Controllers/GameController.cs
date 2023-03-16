@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿using OpenTelemetry.Metrics;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using Prometheus;
+using HistogramConfiguration = Prometheus.HistogramConfiguration;
 
 namespace Mars.Web.Controllers;
 
@@ -11,6 +15,24 @@ public class GameController : ControllerBase
     private readonly ILogger<GameController> logger;
     private readonly ExtraApiClient httpClient;
     private readonly MarsCounters counters;
+
+    //Histograms and counters for prometheus data
+    private static readonly Counter joinCalls = Metrics.CreateCounter(
+    "my_function_calls_total",
+    "Total number of calls to my function");
+
+    private static readonly Histogram joinfunctionDuration = Metrics.CreateHistogram(
+        "my_function_duration_seconds",
+        "Duration of my function in seconds",
+        new HistogramConfiguration
+        {
+            Buckets = Histogram.LinearBuckets(start: 0.1, width: 0.1, count: 10), // Buckets from 0.1s to 1s
+            LabelNames = new[] { "status" } // Add a label to differentiate between successful and failed function calls
+        });
+
+
+
+    //End prometheus input
 
     public GameController(MultiGameHoster multiGameHoster, ILogger<GameController> logger, ExtraApiClient httpClient, MarsCounters counters)
     {
@@ -32,8 +54,11 @@ public class GameController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<JoinResponse>> Join(string gameId, string name)
     {
+        
         if (games.TryGetValue(gameId, out GameManager? gameManager))
         {
+            joinCalls.Inc();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 using var activity = ActivitySources.MarsWeb.StartActivity("Join Game", kind: ActivityKind.Consumer);
@@ -67,6 +92,11 @@ public class GameController : ControllerBase
             {
                 logger.LogError("Player {name} failed to join game {gameId}. Too many players", name, gameId);
                 return Problem("Cannot join game, too many players.", statusCode: 400, title: "Too many players");
+            }
+            finally
+            {
+                stopwatch.Stop();
+                joinfunctionDuration.Observe(stopwatch.Elapsed.TotalSeconds);
             }
         }
         else
