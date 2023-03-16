@@ -49,11 +49,26 @@ builder.Services.AddOpenTelemetry()
         builder.AddOtlpExporter(o => o.Endpoint = new Uri("http://otel-collector:4317"));
     });
 
+
 var joinMeter = new Meter("Mars.Web.Meters");
 var counter = joinMeter.CreateCounter<long>("Game_joins_count");
+
+
+var joinCalls = joinMeter.CreateCounter<long>("my_join_calls_total",
+    "Total number of calls to my function");
+var joinfunctionDuration = joinMeter.CreateHistogram<double>(
+        "my_join_function_duration_seconds"
+  //      new HistogramConfiguration
+  //      {
+  //          Buckets = Histogram.LinearBuckets(start: 0.1, width: 0.1, count: 10), // Buckets from 0.1s to 1s
+  //          LabelNames = new[] { "status" } // Add a label to differentiate between successful and failed function calls
+  //      }
+      );
 builder.Services.AddSingleton<MarsCounters>(new MarsCounters
 {
     GameJoins = counter,
+    JoinCalls  = joinCalls,
+    JoinDuration = joinfunctionDuration
 });
 
 builder.Services.AddOpenTelemetry()
