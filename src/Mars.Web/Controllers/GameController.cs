@@ -16,13 +16,15 @@ public class GameController : ControllerBase
     private readonly ExtraApiClient httpClient;
     private readonly MarsCounters counters;
 
+    
+
     //Histograms and counters for prometheus data
     private static readonly Counter joinCalls = Metrics.CreateCounter(
-    "my_function_calls_total",
+    "my_join_calls_total",
     "Total number of calls to my function");
 
     private static readonly Histogram joinfunctionDuration = Metrics.CreateHistogram(
-        "my_function_duration_seconds",
+        "my_join_function_duration_seconds",
         "Duration of my function in seconds",
         new HistogramConfiguration
         {
@@ -57,7 +59,7 @@ public class GameController : ControllerBase
         
         if (games.TryGetValue(gameId, out GameManager? gameManager))
         {
-            joinCalls.Inc();
+            counters.JoinCalls.Add(1);
             var stopwatch = Stopwatch.StartNew();
             try
             {
@@ -96,7 +98,8 @@ public class GameController : ControllerBase
             finally
             {
                 stopwatch.Stop();
-                joinfunctionDuration.Observe(stopwatch.Elapsed.TotalSeconds);
+                counters.JoinDuration.Record(stopwatch.Elapsed.TotalSeconds);
+                    //Observe();
             }
         }
         else
