@@ -54,8 +54,7 @@ var joinMeter = new Meter("Mars.Web.Meters");
 var counter = joinMeter.CreateCounter<long>("Game_joins_count");
 
 
-var joinCalls = joinMeter.CreateCounter<long>("my_join_calls_total",
-    "Total number of calls to my function");
+var joinCalls = joinMeter.CreateCounter<long>("my_join_calls_total");
 var joinfunctionDuration = joinMeter.CreateHistogram<double>(
         "my_join_function_duration_seconds"
   //      new HistogramConfiguration
