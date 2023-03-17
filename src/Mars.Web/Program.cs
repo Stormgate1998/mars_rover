@@ -66,6 +66,10 @@ var joinfunctionDuration = MarsWebMeter.CreateHistogram<double>(
 var totalgames = MarsWebMeter.CreateCounter<long>("my_cumulative_games_total");
 var errortotal = MarsWebMeter.CreateCounter<long>("my_total_errors_in_user_api");
 var statusCalls = MarsWebMeter.CreateCounter<long>("my_status_calls_total");
+var perseverenceCalls = MarsWebMeter.CreateCounter<long>("my_perseverence_calls_total");
+var ingenuityCalls = MarsWebMeter.CreateCounter<long>("my_ingenuity_calls_total");
+var playercount = MarsWebMeter.CreateCounter<long>("my_player_success_count_total");
+
 builder.Services.AddSingleton<MarsCounters>(new MarsCounters
 {
     GameJoins = counter,
@@ -73,7 +77,10 @@ builder.Services.AddSingleton<MarsCounters>(new MarsCounters
     JoinDuration = joinfunctionDuration,
     TotalGames = totalgames,
     ErrorTotal = errortotal,
-    StatusCalls = statusCalls
+    StatusCalls = statusCalls,
+    PerseverenceCalls = perseverenceCalls,
+    IngenuityCalls = ingenuityCalls,
+    PlayerCount = playercount
 });
 
 builder.Services.AddOpenTelemetry()

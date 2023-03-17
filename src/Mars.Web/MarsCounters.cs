@@ -10,4 +10,7 @@ public class MarsCounters
     public Counter<long> TotalGames { get; set; }
     public Counter<long> ErrorTotal { get; set; }
     public Counter<long> StatusCalls { get; set; }
+    public Counter<long> PerseverenceCalls { get; set; }
+    public Counter<long> IngenuityCalls { get; set; }
+    public Counter<long> PlayerCount { get; set; }
 }

@@ -64,6 +64,7 @@ public class GameController : ControllerBase
 
                     counters.GameJoins.Add(1);
                 }
+                counters.PlayerCount.Add(1);
                 return new JoinResponse
                 {
                     Token = joinResult.Token.Value,
@@ -135,6 +136,8 @@ public class GameController : ControllerBase
     {
         var tokenHasGame = tokenMap.TryGetValue(token, out string? gameId);
 
+        counters.PerseverenceCalls.Add(1);
+
         using (logger.BeginScope("ScopeUserToken: {ScopeUser} GameId: {ScopeGameId} ", token, gameId))
         {
             if (tokenHasGame)
@@ -197,6 +200,9 @@ public class GameController : ControllerBase
     public ActionResult<IngenuityMoveResponse> MoveIngenuity(string token, int destinationRow, int destinationColumn)
     {
         var tokenHasGame = tokenMap.TryGetValue(token, out string? gameId);
+
+        counters.IngenuityCalls.Add(1);
+
         using (logger.BeginScope("ScopeUserToken: {ScopeUser} GameId: {ScopeGameId} ", token, gameId))
         {
             if (tokenHasGame)
