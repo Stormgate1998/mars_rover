@@ -16,23 +16,9 @@ public class GameController : ControllerBase
     private readonly ExtraApiClient httpClient;
     private readonly MarsCounters counters;
 
-    
+
 
     //Histograms and counters for prometheus data
-    private static readonly Counter joinCalls = Metrics.CreateCounter(
-    "my_join_calls_total",
-    "Total number of calls to my function");
-
-    private static readonly Histogram joinfunctionDuration = Metrics.CreateHistogram(
-        "my_join_function_duration_seconds",
-        "Duration of my function in seconds",
-        new HistogramConfiguration
-        {
-            Buckets = Histogram.LinearBuckets(start: 0.1, width: 0.1, count: 10), // Buckets from 0.1s to 1s
-            LabelNames = new[] { "status" } // Add a label to differentiate between successful and failed function calls
-        });
-
-
 
     //End prometheus input
 
@@ -56,7 +42,7 @@ public class GameController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<JoinResponse>> Join(string gameId, string name)
     {
-        
+
         if (games.TryGetValue(gameId, out GameManager? gameManager))
         {
             counters.JoinCalls.Add(1);
@@ -93,18 +79,20 @@ public class GameController : ControllerBase
             catch (TooManyPlayersException)
             {
                 logger.LogError("Player {name} failed to join game {gameId}. Too many players", name, gameId);
+                counters.ErrorTotal.Add(1);
                 return Problem("Cannot join game, too many players.", statusCode: 400, title: "Too many players");
             }
             finally
             {
                 stopwatch.Stop();
                 counters.JoinDuration.Record(stopwatch.Elapsed.TotalSeconds);
-                    //Observe();
+                //Observe();
             }
         }
         else
         {
             logger.LogError("Player {name} failed to join game {gameId}. Game id not found", name, gameId);
+            counters.ErrorTotal.Add(1);
             return Problem("Unrecognized game id.", statusCode: 400, title: "Bad Game ID");
         }
     }
@@ -114,6 +102,7 @@ public class GameController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<StatusResponse> Status(string token)
     {
+        counters.StatusCalls.Add(1);
         var tokenHasGame = tokenMap.TryGetValue(token, out string? gameId);
         using (logger.BeginScope("ScopeUserToken: {ScopeUser} GameId: {ScopeGameId} ", token, gameId))
         {
@@ -128,6 +117,7 @@ public class GameController : ControllerBase
                 }
             }
             logger.LogError("Unrecogized token {token}", token);
+            counters.ErrorTotal.Add(1);
             return Problem("Unrecognized token", statusCode: 400, title: "Bad Token");
         }
     }
@@ -155,12 +145,14 @@ public class GameController : ControllerBase
                     if (!gameManager.Game.TryTranslateToken(token, out playerToken))
                     {
                         logger.LogError("Unrecogized token {token}", token);
+                        counters.ErrorTotal.Add(1);
                         return Problem("Unrecognized token", statusCode: 400, title: "Bad Token");
                     }
 
                     if (gameManager.Game.GameState != GameState.Playing)
                     {
                         logger.LogError($"Could not move: Game not in Playing state.");
+                        counters.ErrorTotal.Add(1);
                         return Problem("Unable to move", statusCode: 400, title: "Game not in Playing state.");
                     }
 
@@ -180,12 +172,14 @@ public class GameController : ControllerBase
                     catch (Exception ex)
                     {
                         logger.LogError("Could not move: {message}", ex.Message);
+                        counters.ErrorTotal.Add(1);
                         return Problem("Unable to move", statusCode: 400, title: ex.Message);
                     }
                 }
 
             }
             logger.LogError("Unrecogized token {token}", token);
+            counters.ErrorTotal.Add(1);
             return Problem("Unrecognized token", statusCode: 400, title: "Bad Token");
         }
     }
@@ -213,12 +207,14 @@ public class GameController : ControllerBase
                     if (!gameManager.Game.TryTranslateToken(token, out playerToken))
                     {
                         logger.LogError("Unrecogized token {token}", token);
+                        counters.ErrorTotal.Add(1);
                         return Problem("Unrecognized token", statusCode: 400, title: "Bad Token");
                     }
 
                     if (gameManager.Game.GameState != GameState.Playing)
                     {
                         logger.LogError("Could not move: Game not in Playing state.");
+                        counters.ErrorTotal.Add(1);
                         return Problem("Unable to move", statusCode: 400, title: "Game not in Playing state.");
                     }
 
@@ -237,11 +233,13 @@ public class GameController : ControllerBase
                     catch (Exception ex)
                     {
                         logger.LogError("Could not move: {exceptionMessage}", ex.Message);
+                             counters.ErrorTotal.Add(1);
                         return Problem("Unable to move", statusCode: 400, title: ex.Message);
                     }
                 }
             }
             logger.LogError("Unrecogized token {token}", token);
+            counters.ErrorTotal.Add(1);
             return Problem("Unrecognized token", statusCode: 400, title: "Bad Token");
         }
     }

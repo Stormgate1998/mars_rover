@@ -50,12 +50,12 @@ builder.Services.AddOpenTelemetry()
     });
 
 
-var joinMeter = new Meter("Mars.Web.Meters");
-var counter = joinMeter.CreateCounter<long>("Game_joins_count");
+var MarsWebMeter = new Meter("Mars.Web.Meters");
+var counter = MarsWebMeter.CreateCounter<long>("Game_joins_count");
 
 
-var joinCalls = joinMeter.CreateCounter<long>("my_join_calls_total");
-var joinfunctionDuration = joinMeter.CreateHistogram<double>(
+var joinCalls = MarsWebMeter.CreateCounter<long>("my_join_calls_total");
+var joinfunctionDuration = MarsWebMeter.CreateHistogram<double>(
         "my_join_function_duration_seconds"
   //      new HistogramConfiguration
   //      {
@@ -63,17 +63,23 @@ var joinfunctionDuration = joinMeter.CreateHistogram<double>(
   //          LabelNames = new[] { "status" } // Add a label to differentiate between successful and failed function calls
   //      }
       );
+var totalgames = MarsWebMeter.CreateCounter<long>("my_cumulative_games_total");
+var errortotal = MarsWebMeter.CreateCounter<long>("my_total_errors_in_user_api");
+var statusCalls = MarsWebMeter.CreateCounter<long>("my_status_calls_total");
 builder.Services.AddSingleton<MarsCounters>(new MarsCounters
 {
     GameJoins = counter,
     JoinCalls  = joinCalls,
-    JoinDuration = joinfunctionDuration
+    JoinDuration = joinfunctionDuration,
+    TotalGames = totalgames,
+    ErrorTotal = errortotal,
+    StatusCalls = statusCalls
 });
 
 builder.Services.AddOpenTelemetry()
     .WithMetrics(builder =>
     {
-        builder.AddMeter(joinMeter.Name);
+        builder.AddMeter(MarsWebMeter.Name);
         builder.SetResourceBuilder(appResourceBuilder);
         builder.AddAspNetCoreInstrumentation();
         builder.AddHttpClientInstrumentation();

@@ -1,5 +1,6 @@
 ﻿@inject ILogger<NewGame> logger
 @inject IConfiguration config
+@inject MarsCounters counters
 @using Microsoft.Extensions.DependencyInjection.Extensions
 
 <div class="modal" id="startGameModal">
@@ -63,6 +64,7 @@
         }
 
         logger.LogInformation("Starting game play!");
+        counters.TotalGames.Add(1);
         gameManager.Game.PlayGame(gamePlayOptions);
     }
 }

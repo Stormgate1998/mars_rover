@@ -7,12 +7,13 @@ public class AdminController : ControllerBase
     private readonly IConfiguration config;
     private readonly ILogger<AdminController> logger;
     private readonly MultiGameHoster gameHoster;
-
-    public AdminController(IConfiguration config, ILogger<AdminController> logger, MultiGameHoster gameHoster)
+    private readonly MarsCounters counters;
+    public AdminController(IConfiguration config, ILogger<AdminController> logger, MultiGameHoster gameHoster, MarsCounters counters)
     {
         this.config = config;
         this.logger = logger;
         this.gameHoster = gameHoster;
+        this.counters = counters;
     }
 
     [HttpPost("[action]")]
@@ -33,6 +34,7 @@ public class AdminController : ControllerBase
                 };
                 logger.LogInformation("Starting game play via admin api");
                 gameManager.Game.PlayGame(gamePlayOptions);
+                counters.TotalGames.Add(1);
                 return Ok("Game started OK");
             }
             catch (Exception ex)
